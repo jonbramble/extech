@@ -27,7 +27,7 @@ class SerialListen
     	 experiment = "MHT000X"
 
 	 temp = string.byteslice(1, 4).to_i(16).fdiv(10).to_s
-    	 str = {time: tm, temperature: temp, experiment: experiment}
+    	 str = {time: tm, temp: temp, experiment: experiment}
     	 save_temp_to_db(str)
     	 ap str
  end
