@@ -1,1 +1,5 @@
-gem 'serialbox', :git => 'git://github.com/jonbramble/serialbox.git'
+source 'https://rubygems.org'
+
+ruby '2.1.0'
+gem 'serialbar'
+gem 'mongoid'

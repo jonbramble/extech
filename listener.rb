@@ -1,8 +1,8 @@
-require 'serialbox'
+require 'serialbar'
 require_relative 'data_file'
 
 class Listener
-	include Serialbox::Listener
+	include Serialbar::Listener
 
 	def parse(string)
 	 tm = Time.now
@@ -22,5 +22,5 @@ end
 
 
 ln = Listener.new
-ln.setup(serialport params)
-ln.run
+ln.setup("/dev/ttyS0",2400,7,1,2)
+ln.poll_every_n_seconds("#001N\n",lines=1,n=5)

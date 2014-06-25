@@ -1,5 +1,6 @@
+
 class DataFile
- include Serialbox::Adapter
+ include Serialbar::Adapter
  configure_adapter :mongoid
  field :time
  field :temp
@@ -7,6 +8,6 @@ class DataFile
  store_in session: "default"
 end
 
-class DataPoint < DataFile
+class TPoint < DataFile
 
 end
