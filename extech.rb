@@ -1,58 +1,35 @@
-require 'serialport'
-require 'mongoid'
-require 'json'
+require 'serialbar'
 require 'awesome_print'
-require 'timers'
 
-class TPoint
-  include Mongoid::Document
-  field :time
-  field :temp
-  field :experiment
-  store_in session: "default"
+class DataFile
+ include Serialbar::Adapter
+ configure_adapter :mongoid
+ field :experiment
+ store_in session: "default"
 end
 
-Mongoid.load!("mongoid.yml", :production)
+class TPoint < DataFile
+  field :time
+  field :ambient
+  field :temp
+end
 
-class SerialListen
+class Listener
+ include Serialbar::Listener
 
- def initialize(port="/dev/ttyS0")
-   @portname = port || "/dev/ttyUSB0"
-   @sp = SerialPort.new(@portname,2400,7,1,SerialPort::EVEN)
-   @sp.write("%EEER\n")
+ def parse(string)	
+    tm = Time.now
+    experiment = "POLFE00X"
+
+    ambient = string.byteslice(7, 4).to_i(16).fdiv(10).to_s
+    temp = string.byteslice(1, 4).to_i(16).fdiv(10).to_s
+    str = {time: tm, temp: temp, ambient: ambient, experiment: experiment}
+    #save_temp_to_db(str) 
+    print_string(str)
  end
 
- def parse_input(string)	
-    	 tm = Time.now
-    	 experiment = "MHT000X"
-
-	 temp = string.byteslice(1, 4).to_i(16).fdiv(10).to_s
-    	 str = {time: tm, temp: temp, experiment: experiment}
-    	 save_temp_to_db(str)
-    	 ap str
- end
-
- 
- def read
-  @sp.write("#001N\n")
-  begin
-   @sp.readline()
-  rescue Interrupt
-   puts "Interrupt"
-  end
- end
-
- def run
-   puts "Listening on serial port #{@portname}"
-    
-   @sp.flush_input
-   #@sp.write("#001N\n")
-
-   timers = Timers.new
-
-   every_seconds = timers.every(1) { parse_input(read) }
-   loop { timers.wait } 
-
+ def print_string(str)
+    ap str
  end
 
  def save_temp_to_db(data)
@@ -62,8 +39,13 @@ class SerialListen
 
 end
 
-listen = SerialListen.new("/dev/ttyS0")
-listen.run
+l = Listener.new
+l.setup("/dev/ttyS0",2400,7,1,1)
+l.serial_port.write("%EEER\n")
+
+l.serial_port.readline    # captures initial reply from logger
+
+l.poll_every_n_seconds("#001N\n",5)
 
 
 
